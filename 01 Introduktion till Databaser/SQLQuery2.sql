@@ -65,3 +65,47 @@ SELECT * FROM Servers;
 SELECT ServerName, IpAddress
 FROM Servers
 WHERE Environment = 'Prod';
+
+-- Uppgift 11
+--Uppdatera IP-adressen för en specifik server i databasen med hjälp av ett UPDATEkommando.
+--Säkerställ att du använder ett filter så att inte alla servrar påverkas.
+UPDATE Servers
+SET IpAddress = '10.0.1.99'
+WHERE ServerName = 'SVR-PROD-SQL01';	-- GÖRVIKTIGT! PÅ RIKTIGT!!!
+
+begin transaction	-- BRA ATT GÖRA innan man försöker sig på något farligt
+UPDATE Servers
+SET IpAddress = '10.0.1.99'		-- OBS vi har inget WHERE
+select * from Servers	-- ALLA har fått samma IP
+ROLLBACK	-- Rulla tillbaka alla ändringar
+select * from Servers	-- Det ser OK ut
+
+-- Om ändringarna gick bra, så låser vi in dem med COMMIT
+--COMMIT
+
+
+-- Uppgift 12
+--Radera en av utvecklingsservrarna permanent från tabellen Servers genom att rikta ett
+--DELETE-kommando specifikt mot radens unika ID-nummer.
+select * from Servers
+delete from Servers
+WHERE Id = 2;			-- GÖRVIKTIGT! Annars raderar vi alla rader i tabellen!!!
+
+-- Antag nu att vi vill stoppa tillbaka den nyss borttagna severn. 
+-- Vi kan lägga till den på nytt:
+insert into Servers (ServerName, IpAddress, Environment)
+values
+	('SVR-STAGE-APP02', '10.0.2.20', 'Dev');
+SELECT * FROM Servers		-- Observera nu vad servern fick för ID
+
+-- Uppgift 13
+--Modifiera tabellen Users i efterhand med hjälp av ett DDL-kommando (ALTER TABLE) så
+--att kolumnen Username får villkoret UNIQUE (vilket förhindrar att två tekniker har samma
+--namn).
+ALTER TABLE Users
+ADD CONSTRAINT UQ_Users_Username UNIQUE (Username);
+
+-- Om vi nu försöker att stoppa in en dublett, så går inte det. Vi får ett felmeddelande.
+INSERT INTO Users (Username, Email, Role)
+VALUES
+	('GlennDevOps', 'glenn@failsafe.it', 'DevOps');
