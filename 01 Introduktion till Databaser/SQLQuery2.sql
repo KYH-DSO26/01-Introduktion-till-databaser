@@ -1,3 +1,6 @@
+USE master;
+GO
+
 -- Skapa en ny databas:
 CREATE DATABASE FailSafeIT_Local;
 GO
@@ -16,6 +19,7 @@ CREATE TABLE Users(
 );
 GO
 
+-- Vi kommer att behöva kolumnen Email lite senare, så lägg till den nu:
 ALTER TABLE Users
 Add Email VARCHAR(100);
 GO
@@ -51,6 +55,7 @@ values
 	('SVR-PROD-SQL01', '10.0.1.10', 'Prod'),
 	('SVR-STAGE-APP02', '10.0.2.20', 'Dev'),
 	('SVR-DEV-SAND01', '10.0.3.50', 'Dev');
+GO
 
 -- Uppgift 9
 --Skriv en sökfråga som hämtar och visar samtliga kolumner och samtliga rader från
@@ -72,13 +77,15 @@ WHERE Environment = 'Prod';
 UPDATE Servers
 SET IpAddress = '10.0.1.99'
 WHERE ServerName = 'SVR-PROD-SQL01';	-- GÖRVIKTIGT! PÅ RIKTIGT!!!
+GO
 
 begin transaction	-- BRA ATT GÖRA innan man försöker sig på något farligt
 UPDATE Servers
 SET IpAddress = '10.0.1.99'		-- OBS vi har inget WHERE
 select * from Servers	-- ALLA har fått samma IP
 ROLLBACK	-- Rulla tillbaka alla ändringar
-select * from Servers	-- Det ser OK ut
+select * from Servers	-- Det ser OK ut - vi kan andas ut :-)
+GO
 
 -- Om ändringarna gick bra, så låser vi in dem med COMMIT
 --COMMIT
@@ -90,12 +97,14 @@ select * from Servers	-- Det ser OK ut
 select * from Servers
 delete from Servers
 WHERE Id = 2;			-- GÖRVIKTIGT! Annars raderar vi alla rader i tabellen!!!
+GO
 
 -- Antag nu att vi vill stoppa tillbaka den nyss borttagna severn. 
 -- Vi kan lägga till den på nytt:
 insert into Servers (ServerName, IpAddress, Environment)
 values
 	('SVR-STAGE-APP02', '10.0.2.20', 'Dev');
+GO
 SELECT * FROM Servers		-- Observera nu vad servern fick för ID
 
 -- Uppgift 13
@@ -104,8 +113,25 @@ SELECT * FROM Servers		-- Observera nu vad servern fick för ID
 --namn).
 ALTER TABLE Users
 ADD CONSTRAINT UQ_Users_Username UNIQUE (Username);
+GO
 
 -- Om vi nu försöker att stoppa in en dublett, så går inte det. Vi får ett felmeddelande.
 INSERT INTO Users (Username, Email, Role)
 VALUES
 	('GlennDevOps', 'glenn@failsafe.it', 'DevOps');
+GO
+
+-- Uppgift 14
+--Lägg till en ny kolumn i tabellen Servers med namnet DateCreated av datatypen
+--DATETIME2 som automatiskt får dagens datum och klockslag som standardvärde
+--(DEFAULT) om inget anges.
+ALTER TABLE Servers
+ADD DateCreated DATETIME2 NOT NULL DEFAULT GETDATE();
+GO
+
+select * from Servers
+
+insert into Servers (ServerName, IpAddress, Environment, DateCreated)
+values
+	('SVR-STAGE-APP03', '10.0.2.21', 'Dev', '2026-11-01 12:00');
+GO
